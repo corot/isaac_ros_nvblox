@@ -49,7 +49,14 @@ void NvbloxCostmapLayer::onInitialize()
   if (!node) {
     throw std::runtime_error{"Failed to lock node"};
   }
-  // declareParameter checks has_parameter, so a second configure does not throw.
+  // Checking has_parameter first keeps a second configure from throwing. Layer::declareParameter
+  // does the same, but newer Nav2 releases drop it.
+  auto declareParameter = [&node, this](
+    const std::string & param_name, const rclcpp::ParameterValue & value) {
+      if (!node->has_parameter(getFullName(param_name))) {
+        node->declare_parameter(getFullName(param_name), value);
+      }
+    };
   declareParameter("enabled", rclcpp::ParameterValue(true));
   declareParameter(
     "nav2_costmap_global_frame", rclcpp::ParameterValue(nav2_costmap_global_frame_));
